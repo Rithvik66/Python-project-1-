@@ -1,0 +1,86 @@
+import json
+from datetime import datetime, timedelta
+import os
+
+DATA_FILE = "donations.json"
+
+# Load donations from file
+def load_donations():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as file:
+            return json.load(file)
+    return []
+
+# Save donations to file
+def save_donations(donations):
+    with open(DATA_FILE, "w") as file:
+        json.dump(donations, file, indent=4, default=str)
+
+# Add a new food donation
+def add_donation():
+    print("\n--- Add Food Donation ---")
+    donor = input("Donor Name: ")
+    food = input("Food Item: ")
+    quantity = input("Quantity (e.g. 10 meals, 5 kg): ")
+    expiry_input = input("Expiry Date (YYYY-MM-DD): ")
+
+    try:
+        expiry_date = datetime.strptime(expiry_input, "%Y-%m-%d")
+    except ValueError:
+        print("Invalid date format. Use YYYY-MM-DD.")
+        return
+
+    donation = {
+        "donor": donor,
+        "food": food,
+        "quantity": quantity,
+        "expiry": expiry_date.strftime("%Y-%m-%d"),
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    donations = load_donations()
+    donations.append(donation)
+    save_donations(donations)
+
+    print("✅ Donation added successfully.")
+
+# View all non-expired donations
+def view_donations():
+    print("\n--- Available Donations ---")
+    donations = load_donations()
+    now = datetime.now()
+    found = False
+
+    for d in donations:
+        expiry_date = datetime.strptime(d["expiry"], "%Y-%m-%d")
+        if expiry_date >= now:
+            days_left = (expiry_date - now).days
+            print(f"\nDonor: {d['donor']}")
+            print(f"Food: {d['food']} ({d['quantity']})")
+            print(f"Expires in: {days_left} day(s) [{d['expiry']}]")
+            found = True
+
+    if not found:
+        print("No active donations at the moment.")
+
+# Main menu
+def main():
+    while True:
+        print("\n=== Food Donation Matcher ===")
+        print("1. Add Donation")
+        print("2. View Donations")
+        print("3. Exit")
+        choice = input("Choose an option (1-3): ")
+
+        if choice == "1":
+            add_donation()
+        elif choice == "2":
+            view_donations()
+        elif choice == "3":
+            print("Thank you! Stay kind. ❤️")
+            break
+        else:
+            print("Invalid choice. Try again.")
+
+if __name__ == "__main__":
+    main()
